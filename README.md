@@ -330,4 +330,4 @@ This project is designed for **educational and authorized security testing purpo
 
 ---
 
-**Built with 🛡️ by Blue Team Security Researchers**
+**Built with 🛡️ by GG**
