@@ -1,0 +1,21 @@
+Type,Value,Severity,Context,MITRE_ID,First_Seen,Last_Seen
+User Account,jsmith,critical,Insider threat actor - Finance Dept,T1078,2024-01-15 22:02,2024-01-15 22:34
+IP Address,192.168.56.10,high,RDP source (attack simulation),T1021.001,2024-01-15 22:02,2024-01-15 22:34
+IP Address,192.168.56.20,medium,Compromised endpoint,N/A,2024-01-15 22:02,2024-01-15 22:34
+Domain,drive.google.com,high,Cloud exfiltration target,T1567.002,2024-01-15 22:22,2024-01-15 22:22
+Domain,dropbox.com,high,Cloud exfiltration target,T1567.002,2024-01-15 22:22,2024-01-15 22:22
+Domain,mega.nz,high,Cloud exfiltration target,T1567.002,2024-01-15 22:22,2024-01-15 22:22
+Domain,wetransfer.com,medium,Cloud exfiltration target,T1567.002,2024-01-15 22:22,2024-01-15 22:22
+Domain,pastebin.com,medium,Data sharing target,T1567.002,2024-01-15 22:22,2024-01-15 22:22
+Domain,onedrive.live.com,medium,Cloud exfiltration target,T1567.002,2024-01-15 22:22,2024-01-15 22:22
+File Hash,39d7e2f4a5b6c8d9e0f1a2b3c4d5e6f7,critical,exfil_package.zip - staged data archive,T1560.001,2024-01-15 22:12,2024-01-15 22:19
+File Path,C:\SensitiveData\Financial\Q4_Revenue_Report.xlsx,high,Accessed financial data,T1005,2024-01-15 22:08,2024-01-15 22:08
+File Path,C:\SensitiveData\HR\employee_records.csv,critical,PII data accessed,T1005,2024-01-15 22:08,2024-01-15 22:08
+File Path,C:\SensitiveData\CustomerData\customer_pii.csv,critical,Customer PII accessed,T1005,2024-01-15 22:08,2024-01-15 22:08
+File Path,C:\SensitiveData\IP\trade_secrets.docx,high,IP data accessed,T1005,2024-01-15 22:08,2024-01-15 22:08
+USB Device,USB Mass Storage Device,high,USBSTOR registry entry,T1052.001,2024-01-15 22:18,2024-01-15 22:19
+Registry Key,HKCU\Software\Microsoft\Windows\CurrentVersion\Run\SystemUpdater,high,Persistence run key,T1547.001,2024-01-15 22:34,2024-01-15 22:34
+Scheduled Task,SystemHealthCheck_2024-01-15,high,Persistence mechanism,T1053.005,2024-01-15 22:34,2024-01-15 22:34
+Process,powershell.exe -EncodedCommand,critical,Encoded PS execution,T1059.001,2024-01-15 22:28,2024-01-15 22:28
+Process,certutil.exe -urlcache,high,LOLBin data transfer,T1105,2024-01-15 22:22,2024-01-15 22:22
+Event,Security Log Cleared (1102),critical,Anti-forensics action,T1070.001,2024-01-15 22:31,2024-01-15 22:31

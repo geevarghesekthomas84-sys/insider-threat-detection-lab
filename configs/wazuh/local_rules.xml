@@ -1,0 +1,314 @@
+<!--
+  Custom Wazuh Rules - Insider Threat Detection
+  Deploy to: /var/ossec/etc/rules/local_rules.xml
+  Rule IDs: 100000-100999 (custom range)
+-->
+<group name="insider_threat,">
+
+  <!-- ============ USB DEVICE MONITORING ============ -->
+  <rule id="100100" level="10">
+    <if_sid>61603</if_sid>
+    <field name="win.eventdata.deviceId">USBSTOR</field>
+    <description>USB storage device connected - Potential data exfiltration vector</description>
+    <mitre>
+      <id>T1052.001</id>
+    </mitre>
+    <group>insider_threat,usb,exfiltration,</group>
+  </rule>
+
+  <rule id="100101" level="12">
+    <if_sid>100100</if_sid>
+    <time>8pm - 6am</time>
+    <description>USB storage device connected during off-hours - HIGH RISK</description>
+    <mitre>
+      <id>T1052.001</id>
+    </mitre>
+    <group>insider_threat,usb,exfiltration,afterhours,</group>
+  </rule>
+
+  <rule id="100102" level="8">
+    <if_sid>61603</if_sid>
+    <field name="win.system.eventID">^20001$</field>
+    <description>New USB device driver installed - Device tracking</description>
+    <mitre>
+      <id>T1052.001</id>
+    </mitre>
+    <group>insider_threat,usb,</group>
+  </rule>
+
+  <!-- Registry change in USBSTOR -->
+  <rule id="100103" level="10">
+    <if_sid>750</if_sid>
+    <field name="syscheck.path">USBSTOR</field>
+    <description>FIM: USB device registry entry modified</description>
+    <mitre>
+      <id>T1052.001</id>
+    </mitre>
+    <group>insider_threat,usb,fim,</group>
+  </rule>
+
+  <!-- ============ SENSITIVE FILE ACCESS ============ -->
+  <rule id="100200" level="10">
+    <if_sid>550</if_sid>
+    <field name="syscheck.path">SensitiveData|ConfidentialProjects</field>
+    <description>FIM: Sensitive file modified - Possible data theft</description>
+    <mitre>
+      <id>T1005</id>
+    </mitre>
+    <group>insider_threat,fim,data_access,</group>
+  </rule>
+
+  <rule id="100201" level="12">
+    <if_sid>554</if_sid>
+    <field name="syscheck.path">SensitiveData|ConfidentialProjects</field>
+    <description>FIM: Sensitive file DELETED - Data destruction alert</description>
+    <mitre>
+      <id>T1485</id>
+    </mitre>
+    <group>insider_threat,fim,data_destruction,</group>
+  </rule>
+
+  <rule id="100202" level="8">
+    <if_sid>553</if_sid>
+    <field name="syscheck.path">SensitiveData|ConfidentialProjects</field>
+    <description>FIM: New file created in sensitive directory</description>
+    <mitre>
+      <id>T1074.001</id>
+    </mitre>
+    <group>insider_threat,fim,staging,</group>
+  </rule>
+
+  <!-- ============ POWERSHELL MONITORING ============ -->
+  <rule id="100300" level="12">
+    <if_sid>91801</if_sid>
+    <field name="win.eventdata.scriptBlockText">Invoke-Mimikatz|Invoke-Kerberoast|Invoke-TokenManipulation|Get-Keystrokes|Invoke-CredentialInjection</field>
+    <description>PowerShell: Offensive tool execution detected</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1003</id>
+    </mitre>
+    <group>insider_threat,powershell,credential_theft,</group>
+  </rule>
+
+  <rule id="100301" level="10">
+    <if_sid>91801</if_sid>
+    <field name="win.eventdata.scriptBlockText">Net.WebClient|DownloadString|DownloadFile|IEX|Invoke-Expression|FromBase64String</field>
+    <description>PowerShell: Suspicious download/execution pattern</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1105</id>
+    </mitre>
+    <group>insider_threat,powershell,download,</group>
+  </rule>
+
+  <rule id="100302" level="10">
+    <if_sid>91801</if_sid>
+    <field name="win.eventdata.scriptBlockText">-enc|-EncodedCommand|-WindowStyle Hidden|-NonInteractive.*-ExecutionPolicy Bypass</field>
+    <description>PowerShell: Obfuscated/hidden execution detected</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1027</id>
+    </mitre>
+    <group>insider_threat,powershell,obfuscation,</group>
+  </rule>
+
+  <rule id="100303" level="8">
+    <if_sid>91801</if_sid>
+    <field name="win.eventdata.scriptBlockText">Compress-Archive|Copy-Item.*\\\\|Get-ChildItem.*-Recurse</field>
+    <description>PowerShell: File collection/staging activity</description>
+    <mitre>
+      <id>T1074.001</id>
+      <id>T1560.001</id>
+    </mitre>
+    <group>insider_threat,powershell,collection,</group>
+  </rule>
+
+  <rule id="100304" level="10">
+    <if_sid>91801</if_sid>
+    <field name="win.eventdata.scriptBlockText">Set-MpPreference.*-DisableRealtimeMonitoring|Uninstall-WindowsFeature.*Windows-Defender</field>
+    <description>PowerShell: Attempt to disable Windows Defender</description>
+    <mitre>
+      <id>T1562.001</id>
+    </mitre>
+    <group>insider_threat,powershell,defense_evasion,</group>
+  </rule>
+
+  <!-- ============ LOG CLEARING / TAMPERING ============ -->
+  <rule id="100400" level="14">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^1102$</field>
+    <description>CRITICAL: Security audit log was cleared - Anti-forensics</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <group>insider_threat,log_tampering,defense_evasion,</group>
+  </rule>
+
+  <rule id="100401" level="12">
+    <if_sid>91801</if_sid>
+    <field name="win.eventdata.scriptBlockText">Clear-EventLog|wevtutil cl|Remove-EventLog</field>
+    <description>PowerShell: Event log clearing command detected</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <group>insider_threat,log_tampering,powershell,</group>
+  </rule>
+
+  <rule id="100402" level="10">
+    <if_sid>92050</if_sid>
+    <field name="win.eventdata.commandLine">wevtutil|Clear-EventLog</field>
+    <description>Process: Log clearing utility execution via Sysmon</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <group>insider_threat,log_tampering,sysmon,</group>
+  </rule>
+
+  <!-- ============ AFTER-HOURS LOGIN DETECTION ============ -->
+  <rule id="100500" level="10">
+    <if_sid>60106</if_sid>
+    <time>10pm - 5am</time>
+    <description>After-hours successful login detected (10PM-5AM)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>insider_threat,authentication,afterhours,</group>
+  </rule>
+
+  <rule id="100501" level="8">
+    <if_sid>60106</if_sid>
+    <time>6pm - 10pm</time>
+    <weekday>weekends</weekday>
+    <description>Weekend evening login detected - Unusual activity</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>insider_threat,authentication,afterhours,</group>
+  </rule>
+
+  <rule id="100502" level="12">
+    <if_sid>60122</if_sid>
+    <frequency>5</frequency>
+    <timeframe>300</timeframe>
+    <description>Multiple failed logins followed by success - Possible credential abuse</description>
+    <mitre>
+      <id>T1078</id>
+      <id>T1110</id>
+    </mitre>
+    <group>insider_threat,authentication,brute_force,</group>
+  </rule>
+
+  <!-- ============ PRIVILEGE ESCALATION ============ -->
+  <rule id="100600" level="12">
+    <if_sid>60106</if_sid>
+    <field name="win.eventdata.logonType">^10$</field>
+    <time>10pm - 5am</time>
+    <description>After-hours RDP login - High risk remote access</description>
+    <mitre>
+      <id>T1021.001</id>
+    </mitre>
+    <group>insider_threat,rdp,afterhours,lateral_movement,</group>
+  </rule>
+
+  <rule id="100601" level="10">
+    <if_sid>60106</if_sid>
+    <field name="win.eventdata.logonType">^3$</field>
+    <field name="win.eventdata.targetUserName">Administrator|admin</field>
+    <description>Network logon with admin account - Lateral movement indicator</description>
+    <mitre>
+      <id>T1021.002</id>
+    </mitre>
+    <group>insider_threat,lateral_movement,admin_abuse,</group>
+  </rule>
+
+  <!-- Special privileges assigned to logon -->
+  <rule id="100602" level="8">
+    <if_sid>60106</if_sid>
+    <field name="win.system.eventID">^4672$</field>
+    <time>10pm - 5am</time>
+    <description>Special privileges assigned during off-hours logon</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>insider_threat,privilege_escalation,afterhours,</group>
+  </rule>
+
+  <!-- ============ DATA EXFILTRATION INDICATORS ============ -->
+  <rule id="100700" level="10">
+    <if_sid>92050</if_sid>
+    <field name="win.eventdata.image">curl.exe|wget.exe|certutil.exe|bitsadmin.exe</field>
+    <description>Sysmon: Data transfer tool execution - Exfiltration risk</description>
+    <mitre>
+      <id>T1567</id>
+      <id>T1048</id>
+    </mitre>
+    <group>insider_threat,exfiltration,sysmon,</group>
+  </rule>
+
+  <rule id="100701" level="12">
+    <if_sid>92050</if_sid>
+    <field name="win.eventdata.commandLine">drive.google.com|dropbox.com|mega.nz|onedrive.live.com|wetransfer.com|pastebin.com</field>
+    <description>Cloud storage upload detected - Data exfiltration alert</description>
+    <mitre>
+      <id>T1567.002</id>
+    </mitre>
+    <group>insider_threat,exfiltration,cloud_upload,</group>
+  </rule>
+
+  <rule id="100702" level="8">
+    <if_sid>92050</if_sid>
+    <field name="win.eventdata.commandLine">Compress-Archive|7z|rar.*a.*-p|tar.*czf</field>
+    <description>File archiving with potential password protection - Staging</description>
+    <mitre>
+      <id>T1560.001</id>
+    </mitre>
+    <group>insider_threat,exfiltration,staging,</group>
+  </rule>
+
+  <!-- ============ SCHEDULED TASK PERSISTENCE ============ -->
+  <rule id="100800" level="10">
+    <if_sid>60106</if_sid>
+    <field name="win.system.eventID">^4698$</field>
+    <description>Scheduled task created - Persistence mechanism</description>
+    <mitre>
+      <id>T1053.005</id>
+    </mitre>
+    <group>insider_threat,persistence,scheduled_task,</group>
+  </rule>
+
+  <!-- ============ CREDENTIAL ACCESS ============ -->
+  <rule id="100900" level="14">
+    <if_sid>92050</if_sid>
+    <field name="win.eventdata.image">mimikatz|procdump|lsass</field>
+    <description>CRITICAL: Credential dumping tool detected</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+    <group>insider_threat,credential_theft,critical,</group>
+  </rule>
+
+  <rule id="100901" level="12">
+    <if_sid>92050</if_sid>
+    <field name="win.eventdata.targetFilename">\\lsass.dmp|\\lsass.exe</field>
+    <description>LSASS process access/dump detected - Credential theft</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+    <group>insider_threat,credential_theft,</group>
+  </rule>
+
+  <!-- ============ COMPOSITE / CORRELATION RULES ============ -->
+  <!-- Multiple sensitive file access + USB = High confidence exfiltration -->
+  <rule id="100950" level="14">
+    <if_sid>100200</if_sid>
+    <if_matched_sid>100100</if_matched_sid>
+    <same_user />
+    <description>CRITICAL: Sensitive file access combined with USB device - Active exfiltration</description>
+    <mitre>
+      <id>T1005</id>
+      <id>T1052.001</id>
+    </mitre>
+    <group>insider_threat,exfiltration,critical,composite,</group>
+  </rule>
+
+</group>

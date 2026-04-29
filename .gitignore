@@ -1,0 +1,17 @@
+*.evtx
+*.dmp
+*.vmdk
+*.ova
+*.iso
+*.msi
+*.deb
+*.log
+node_modules/
+.env
+*.pem
+*.key
+*.cert
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

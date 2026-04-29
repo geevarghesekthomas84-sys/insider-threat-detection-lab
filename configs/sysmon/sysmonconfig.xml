@@ -1,0 +1,196 @@
+<!--
+  Sysmon Configuration for Insider Threat Detection Lab
+  Deploy with: sysmon64.exe -accepteula -i sysmonconfig.xml
+  Based on SwiftOnSecurity/sysmon-config with insider threat additions
+-->
+<Sysmon schemaversion="4.90">
+  <HashAlgorithms>md5,sha256,IMPHASH</HashAlgorithms>
+  <CheckRevocation>false</CheckRevocation>
+
+  <EventFiltering>
+
+    <!-- Event ID 1: Process Creation - LOG ALL with exclusions -->
+    <RuleGroup name="ProcessCreate" groupRelation="or">
+      <ProcessCreate onmatch="exclude">
+        <Image condition="is">C:\Windows\System32\backgroundTaskHost.exe</Image>
+        <Image condition="is">C:\Windows\System32\SearchProtocolHost.exe</Image>
+        <Image condition="is">C:\Windows\System32\SearchFilterHost.exe</Image>
+        <Image condition="is">C:\Windows\System32\SearchIndexer.exe</Image>
+        <Image condition="is">C:\Program Files\Windows Defender\MsMpEng.exe</Image>
+        <Image condition="is">C:\Windows\System32\audiodg.exe</Image>
+        <Image condition="is">C:\Windows\System32\conhost.exe</Image>
+        <ParentImage condition="is">C:\Windows\System32\svchost.exe</ParentImage>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- Event ID 2: File Creation Time Changed -->
+    <RuleGroup name="FileCreateTime" groupRelation="or">
+      <FileCreateTime onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+        <Image condition="end with">\wscript.exe</Image>
+        <Image condition="end with">\cscript.exe</Image>
+        <Image condition="end with">\mshta.exe</Image>
+      </FileCreateTime>
+    </RuleGroup>
+
+    <!-- Event ID 3: Network Connection - Key processes only -->
+    <RuleGroup name="NetworkConnect" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+        <Image condition="end with">\curl.exe</Image>
+        <Image condition="end with">\wget.exe</Image>
+        <Image condition="end with">\certutil.exe</Image>
+        <Image condition="end with">\bitsadmin.exe</Image>
+        <Image condition="end with">\mshta.exe</Image>
+        <Image condition="end with">\rundll32.exe</Image>
+        <Image condition="end with">\regsvr32.exe</Image>
+        <Image condition="end with">\wscript.exe</Image>
+        <Image condition="end with">\cscript.exe</Image>
+        <DestinationPort condition="is">443</DestinationPort>
+        <DestinationPort condition="is">80</DestinationPort>
+        <DestinationPort condition="is">8080</DestinationPort>
+        <DestinationPort condition="is">4444</DestinationPort>
+        <DestinationPort condition="is">5555</DestinationPort>
+        <DestinationPort condition="is">1337</DestinationPort>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- Event ID 5: Process Terminated -->
+    <RuleGroup name="ProcessTerminate" groupRelation="or">
+      <ProcessTerminate onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+      </ProcessTerminate>
+    </RuleGroup>
+
+    <!-- Event ID 6: Driver Loaded (USB detection) -->
+    <RuleGroup name="DriverLoad" groupRelation="or">
+      <DriverLoad onmatch="exclude">
+        <Signature condition="contains">Microsoft</Signature>
+        <Signature condition="contains">Windows</Signature>
+      </DriverLoad>
+    </RuleGroup>
+
+    <!-- Event ID 7: Image Loaded - DLL Loading -->
+    <RuleGroup name="ImageLoad" groupRelation="or">
+      <ImageLoad onmatch="include">
+        <ImageLoaded condition="end with">\samlib.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\vaultcli.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\WinSCard.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\cryptdll.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\amsi.dll</ImageLoaded>
+      </ImageLoad>
+    </RuleGroup>
+
+    <!-- Event ID 8: CreateRemoteThread -->
+    <RuleGroup name="CreateRemoteThread" groupRelation="or">
+      <CreateRemoteThread onmatch="exclude">
+        <SourceImage condition="is">C:\Windows\System32\svchost.exe</SourceImage>
+        <SourceImage condition="is">C:\Windows\System32\wbem\WmiPrvSE.exe</SourceImage>
+      </CreateRemoteThread>
+    </RuleGroup>
+
+    <!-- Event ID 9: RawAccessRead -->
+    <RuleGroup name="RawAccessRead" groupRelation="or">
+      <RawAccessRead onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+      </RawAccessRead>
+    </RuleGroup>
+
+    <!-- Event ID 10: Process Access (LSASS monitoring) -->
+    <RuleGroup name="ProcessAccess" groupRelation="or">
+      <ProcessAccess onmatch="include">
+        <TargetImage condition="end with">\lsass.exe</TargetImage>
+      </ProcessAccess>
+    </RuleGroup>
+
+    <!-- Event ID 11: File Create -->
+    <RuleGroup name="FileCreate" groupRelation="or">
+      <FileCreate onmatch="include">
+        <TargetFilename condition="end with">.exe</TargetFilename>
+        <TargetFilename condition="end with">.dll</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="end with">.cmd</TargetFilename>
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.vbs</TargetFilename>
+        <TargetFilename condition="end with">.js</TargetFilename>
+        <TargetFilename condition="end with">.hta</TargetFilename>
+        <TargetFilename condition="end with">.lnk</TargetFilename>
+        <TargetFilename condition="end with">.zip</TargetFilename>
+        <TargetFilename condition="end with">.rar</TargetFilename>
+        <TargetFilename condition="end with">.7z</TargetFilename>
+        <TargetFilename condition="contains">\SensitiveData\</TargetFilename>
+        <TargetFilename condition="contains">\ConfidentialProjects\</TargetFilename>
+        <TargetFilename condition="contains">\Startup\</TargetFilename>
+        <TargetFilename condition="contains">\Temp\</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- Event ID 12,13,14: Registry Events -->
+    <RuleGroup name="RegistryEvent" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">\CurrentVersion\Run</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\RunOnce</TargetObject>
+        <TargetObject condition="contains">\Services\</TargetObject>
+        <TargetObject condition="contains">\Winlogon\</TargetObject>
+        <TargetObject condition="contains">\PowerShell\</TargetObject>
+        <TargetObject condition="contains">\USBSTOR\</TargetObject>
+        <TargetObject condition="contains">\Policies\</TargetObject>
+        <TargetObject condition="contains">\Explorer\Advanced</TargetObject>
+        <TargetObject condition="contains">\Windows Defender\</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- Event ID 15: FileCreateStreamHash (ADS) -->
+    <RuleGroup name="FileCreateStreamHash" groupRelation="or">
+      <FileCreateStreamHash onmatch="include">
+        <TargetFilename condition="end with">.exe</TargetFilename>
+        <TargetFilename condition="end with">.dll</TargetFilename>
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="contains">Zone.Identifier</TargetFilename>
+      </FileCreateStreamHash>
+    </RuleGroup>
+
+    <!-- Event ID 17,18: Pipe Events -->
+    <RuleGroup name="PipeEvent" groupRelation="or">
+      <PipeEvent onmatch="include">
+        <PipeName condition="contains">mimikatz</PipeName>
+        <PipeName condition="contains">psexec</PipeName>
+        <PipeName condition="contains">cobaltstrike</PipeName>
+        <PipeName condition="contains">meterpreter</PipeName>
+      </PipeEvent>
+    </RuleGroup>
+
+    <!-- Event ID 22: DNS Query -->
+    <RuleGroup name="DnsQuery" groupRelation="or">
+      <DnsQuery onmatch="include">
+        <QueryName condition="end with">.onion</QueryName>
+        <QueryName condition="end with">.bit</QueryName>
+        <QueryName condition="contains">pastebin.com</QueryName>
+        <QueryName condition="contains">mega.nz</QueryName>
+        <QueryName condition="contains">transfer.sh</QueryName>
+        <QueryName condition="contains">ngrok</QueryName>
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+        <Image condition="end with">\certutil.exe</Image>
+      </DnsQuery>
+    </RuleGroup>
+
+    <!-- Event ID 23: File Delete -->
+    <RuleGroup name="FileDelete" groupRelation="or">
+      <FileDelete onmatch="include">
+        <TargetFilename condition="contains">\SensitiveData\</TargetFilename>
+        <TargetFilename condition="contains">\ConfidentialProjects\</TargetFilename>
+        <TargetFilename condition="end with">.evtx</TargetFilename>
+        <TargetFilename condition="end with">.log</TargetFilename>
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+      </FileDelete>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>

@@ -1,0 +1,30 @@
+Timestamp,Phase,Event,Source,User,MITRE_ID,Severity,Details
+2024-01-15 22:02:00,Initial Access,RDP Login (After Hours),Security 4624,jsmith,T1078,high,Logon Type 10 from 192.168.56.10
+2024-01-15 22:02:05,Initial Access,Special Privileges Assigned,Security 4672,jsmith,T1078,medium,SeDebugPrivilege assigned
+2024-01-15 22:05:50,Discovery,Directory Enumeration,Sysmon EID 1,jsmith,T1083,medium,Get-ChildItem -Recurse C:\SensitiveData
+2024-01-15 22:06:30,Discovery,System Info Collection,Sysmon EID 1,jsmith,T1082,low,systeminfo > sysinfo.txt
+2024-01-15 22:07:15,Discovery,Network Info Collection,Sysmon EID 1,jsmith,T1016,low,ipconfig /all
+2024-01-15 22:07:45,Discovery,User Enumeration,Sysmon EID 1,jsmith,T1087,low,net user / net localgroup Administrators
+2024-01-15 22:08:00,Collection,Financial Data Access,Wazuh FIM,jsmith,T1005,high,Read Q4_Revenue_Report.xlsx
+2024-01-15 22:08:15,Collection,HR PII Data Access,Wazuh FIM,jsmith,T1005,critical,Read employee_records.csv (SSN data)
+2024-01-15 22:08:30,Collection,Customer PII Access,Wazuh FIM,jsmith,T1005,critical,Read customer_pii.csv (CC numbers)
+2024-01-15 22:08:42,Collection,Trade Secret Access,Wazuh FIM,jsmith,T1005,high,Read trade_secrets.docx
+2024-01-15 22:12:00,Staging,Files Copied to Temp,Sysmon EID 11,jsmith,T1074.001,medium,Copy-Item to %TEMP%\staging
+2024-01-15 22:12:30,Staging,Archive Created,Sysmon EID 1,jsmith,T1560.001,high,Compress-Archive exfil_package.zip
+2024-01-15 22:18:55,Exfiltration,USB Device Connected,System 20001,SYSTEM,T1052.001,high,USBSTOR driver loaded
+2024-01-15 22:19:10,Exfiltration,Archive Copied to USB,Sysmon EID 11,jsmith,T1052.001,critical,exfil_package.zip copied to E:\
+2024-01-15 22:22:00,Exfiltration,Cloud DNS - Google Drive,Sysmon EID 22,jsmith,T1567.002,high,DNS query drive.google.com
+2024-01-15 22:22:05,Exfiltration,Cloud DNS - Dropbox,Sysmon EID 22,jsmith,T1567.002,high,DNS query dropbox.com
+2024-01-15 22:22:10,Exfiltration,Cloud DNS - Mega,Sysmon EID 22,jsmith,T1567.002,high,DNS query mega.nz
+2024-01-15 22:22:30,Exfiltration,Upload Attempt via curl,Sysmon EID 3,jsmith,T1567.002,critical,curl POST to httpbin.org
+2024-01-15 22:23:00,Exfiltration,certutil Download,Sysmon EID 1,jsmith,T1105,high,certutil -urlcache -split -f
+2024-01-15 22:25:33,Credential Access,LSASS Process Access,Sysmon EID 10,jsmith,T1003.001,critical,TargetImage: lsass.exe
+2024-01-15 22:28:00,Execution,Encoded PowerShell,PS 4104,jsmith,T1059.001,critical,powershell -EncodedCommand [base64]
+2024-01-15 22:28:30,Execution,PS Bypass Flags,PS 4104,jsmith,T1059.001,high,-ExecutionPolicy Bypass -WindowStyle Hidden
+2024-01-15 22:29:00,Defense Evasion,Defender Disable Attempt,PS 4104,jsmith,T1562.001,high,Set-MpPreference -DisableRealtimeMonitoring
+2024-01-15 22:31:02,Defense Evasion,Security Log Cleared,Security 1102,jsmith,T1070.001,critical,wevtutil cl Security
+2024-01-15 22:32:00,Defense Evasion,Application Log Cleared,Sysmon EID 1,jsmith,T1070.001,high,wevtutil cl Application
+2024-01-15 22:33:00,Defense Evasion,Timestomping,Sysmon EID 2,jsmith,T1070.006,medium,File creation time changed -30 days
+2024-01-15 22:33:30,Defense Evasion,Staging Evidence Deleted,Sysmon EID 23,jsmith,T1070.004,medium,staging directory removed
+2024-01-15 22:34:00,Persistence,Scheduled Task Created,Security 4698,jsmith,T1053.005,high,SystemHealthCheck at 3:00AM
+2024-01-15 22:34:15,Persistence,Registry Run Key Added,Sysmon EID 13,jsmith,T1547.001,high,HKCU Run key: SystemUpdater

@@ -1,0 +1,256 @@
+title: Insider Threat - Sensitive File Access via PowerShell
+id: a1b2c3d4-1001-4000-a000-000000000001
+status: experimental
+description: Detects PowerShell accessing files in sensitive company directories
+author: Blue Team SOC
+date: 2024/01/15
+references:
+    - https://attack.mitre.org/techniques/T1005/
+logsource:
+    product: windows
+    category: ps_script
+detection:
+    selection:
+        ScriptBlockText|contains:
+            - 'C:\SensitiveData'
+            - 'C:\ConfidentialProjects'
+            - 'Get-Content'
+            - 'Copy-Item'
+    condition: selection
+falsepositives:
+    - Legitimate admin file operations
+level: high
+tags:
+    - attack.collection
+    - attack.t1005
+---
+title: Insider Threat - USB Storage Device Connected
+id: a1b2c3d4-1002-4000-a000-000000000002
+status: experimental
+description: Detects USB storage device connections via driver installation events
+author: Blue Team SOC
+date: 2024/01/15
+references:
+    - https://attack.mitre.org/techniques/T1052/001/
+logsource:
+    product: windows
+    service: system
+detection:
+    selection:
+        EventID: 20001
+    filter:
+        DeviceId|contains: 'USBSTOR'
+    condition: selection
+falsepositives:
+    - Authorized USB devices
+level: high
+tags:
+    - attack.exfiltration
+    - attack.t1052.001
+---
+title: Insider Threat - Suspicious PowerShell Encoded Command
+id: a1b2c3d4-1003-4000-a000-000000000003
+status: experimental
+description: Detects PowerShell execution with encoded commands or suspicious flags
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    category: process_creation
+detection:
+    selection_encoded:
+        CommandLine|contains:
+            - '-enc'
+            - '-EncodedCommand'
+            - 'FromBase64String'
+    selection_hidden:
+        CommandLine|contains|all:
+            - '-WindowStyle'
+            - 'Hidden'
+    selection_bypass:
+        CommandLine|contains:
+            - '-ExecutionPolicy Bypass'
+            - '-ep bypass'
+    condition: selection_encoded or selection_hidden or selection_bypass
+falsepositives:
+    - Some legitimate admin scripts use encoded commands
+level: high
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense_evasion
+    - attack.t1027
+---
+title: Insider Threat - Security Event Log Cleared
+id: a1b2c3d4-1004-4000-a000-000000000004
+status: stable
+description: Detects clearing of Windows Security event log - strong anti-forensics indicator
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 1102
+    condition: selection
+falsepositives:
+    - Legitimate log rotation (very rare for Security log)
+level: critical
+tags:
+    - attack.defense_evasion
+    - attack.t1070.001
+---
+title: Insider Threat - After Hours Interactive Logon
+id: a1b2c3d4-1005-4000-a000-000000000005
+status: experimental
+description: Detects interactive logons during non-business hours (10PM-5AM)
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4624
+        LogonType:
+            - 2
+            - 10
+            - 11
+    timeframe: 22:00-05:00
+    condition: selection
+falsepositives:
+    - Authorized after-hours work
+    - Shift workers
+level: medium
+tags:
+    - attack.initial_access
+    - attack.t1078
+---
+title: Insider Threat - Cloud Storage DNS Resolution
+id: a1b2c3d4-1006-4000-a000-000000000006
+status: experimental
+description: Detects DNS resolution of cloud storage services from workstations
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    category: dns_query
+detection:
+    selection:
+        QueryName|endswith:
+            - 'drive.google.com'
+            - 'dropbox.com'
+            - 'mega.nz'
+            - 'wetransfer.com'
+            - 'onedrive.live.com'
+            - 'pastebin.com'
+            - 'transfer.sh'
+    condition: selection
+falsepositives:
+    - Authorized cloud storage usage
+level: medium
+tags:
+    - attack.exfiltration
+    - attack.t1567.002
+---
+title: Insider Threat - LSASS Process Access
+id: a1b2c3d4-1007-4000-a000-000000000007
+status: stable
+description: Detects non-system processes accessing LSASS memory
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    category: process_access
+detection:
+    selection:
+        TargetImage|endswith: '\lsass.exe'
+    filter:
+        SourceImage|startswith:
+            - 'C:\Windows\System32\'
+            - 'C:\Windows\SysWOW64\'
+            - 'C:\Program Files\Windows Defender\'
+    condition: selection and not filter
+falsepositives:
+    - AV/EDR products
+level: critical
+tags:
+    - attack.credential_access
+    - attack.t1003.001
+---
+title: Insider Threat - Scheduled Task Created for Persistence
+id: a1b2c3d4-1008-4000-a000-000000000008
+status: experimental
+description: Detects creation of scheduled tasks that may indicate persistence
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4698
+    filter:
+        TaskContent|contains:
+            - 'Microsoft'
+            - 'Google Update'
+    condition: selection and not filter
+falsepositives:
+    - Legitimate software installations
+level: medium
+tags:
+    - attack.persistence
+    - attack.t1053.005
+---
+title: Insider Threat - File Archive Creation
+id: a1b2c3d4-1009-4000-a000-000000000009
+status: experimental
+description: Detects creation of compressed archives which may indicate data staging
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    category: process_creation
+detection:
+    selection_tools:
+        Image|endswith:
+            - '\7z.exe'
+            - '\rar.exe'
+            - '\zip.exe'
+            - '\tar.exe'
+    selection_ps:
+        CommandLine|contains: 'Compress-Archive'
+    condition: selection_tools or selection_ps
+falsepositives:
+    - Legitimate file compression
+level: medium
+tags:
+    - attack.collection
+    - attack.t1560.001
+---
+title: Insider Threat - Registry Run Key Modification
+id: a1b2c3d4-1010-4000-a000-000000000010
+status: experimental
+description: Detects modification of registry Run keys for persistence
+author: Blue Team SOC
+date: 2024/01/15
+logsource:
+    product: windows
+    category: registry_set
+detection:
+    selection:
+        TargetObject|contains:
+            - '\CurrentVersion\Run'
+            - '\CurrentVersion\RunOnce'
+    filter:
+        Image|startswith:
+            - 'C:\Windows\'
+            - 'C:\Program Files\'
+    condition: selection and not filter
+falsepositives:
+    - Legitimate software auto-start
+level: high
+tags:
+    - attack.persistence
+    - attack.t1547.001

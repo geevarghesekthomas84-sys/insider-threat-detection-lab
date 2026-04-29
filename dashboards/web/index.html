@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insider Threat SOC Dashboard</title>
+    <meta name="description" content="Real-time Security Operations Center dashboard for insider threat detection and incident response">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <span class="logo-title">SOC Dashboard</span>
+                    <span class="logo-subtitle">Insider Threat Lab</span>
+                </div>
+            </div>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active" data-tab="overview">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Overview</span>
+            </li>
+            <li class="nav-item" data-tab="alerts">
+                <span class="nav-icon">🚨</span>
+                <span class="nav-label">Alerts</span>
+                <span class="badge badge-critical" id="alertBadge">12</span>
+            </li>
+            <li class="nav-item" data-tab="mitre">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">MITRE ATT&CK</span>
+            </li>
+            <li class="nav-item" data-tab="timeline">
+                <span class="nav-icon">⏱️</span>
+                <span class="nav-label">Attack Timeline</span>
+            </li>
+            <li class="nav-item" data-tab="endpoints">
+                <span class="nav-icon">💻</span>
+                <span class="nav-label">Endpoints</span>
+            </li>
+            <li class="nav-item" data-tab="incident">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">IR Workflow</span>
+            </li>
+            <li class="nav-item" data-tab="forensics">
+                <span class="nav-icon">🔬</span>
+                <span class="nav-label">Forensics</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="status-indicator online"></div>
+            <span>System Online</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">☰</button>
+                <h1 class="page-title" id="pageTitle">Security Overview</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="search-box">
+                    <input type="text" placeholder="Search alerts, IOCs..." id="globalSearch">
+                </div>
+                <div class="topbar-time" id="liveTime"></div>
+                <div class="topbar-status">
+                    <span class="pulse-dot critical"></span>
+                    <span id="threatLevel">ELEVATED</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab: Overview -->
+        <div class="tab-content active" id="tab-overview">
+            <!-- Stat Cards -->
+            <div class="stats-grid">
+                <div class="stat-card critical">
+                    <div class="stat-icon">🔴</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="criticalCount">5</span>
+                        <span class="stat-label">Critical Alerts</span>
+                    </div>
+                    <div class="stat-trend up">↑ 40%</div>
+                </div>
+                <div class="stat-card high">
+                    <div class="stat-icon">🟠</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="highCount">12</span>
+                        <span class="stat-label">High Alerts</span>
+                    </div>
+                    <div class="stat-trend up">↑ 25%</div>
+                </div>
+                <div class="stat-card medium">
+                    <div class="stat-icon">🟡</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="mediumCount">23</span>
+                        <span class="stat-label">Medium Alerts</span>
+                    </div>
+                    <div class="stat-trend down">↓ 5%</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon">🔵</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalEvents">1,247</span>
+                        <span class="stat-label">Total Events</span>
+                    </div>
+                    <div class="stat-trend">24h</div>
+                </div>
+                <div class="stat-card agents">
+                    <div class="stat-icon">💻</div>
+                    <div class="stat-info">
+                        <span class="stat-value">4</span>
+                        <span class="stat-label">Active Agents</span>
+                    </div>
+                    <div class="stat-trend online">Online</div>
+                </div>
+                <div class="stat-card rules">
+                    <div class="stat-icon">📏</div>
+                    <div class="stat-info">
+                        <span class="stat-value">52</span>
+                        <span class="stat-label">Detection Rules</span>
+                    </div>
+                    <div class="stat-trend">Active</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-grid">
+                <div class="chart-card wide">
+                    <div class="chart-header">
+                        <h3>Alert Timeline (24h)</h3>
+                        <div class="chart-actions">
+                            <button class="btn-sm active">24h</button>
+                            <button class="btn-sm">7d</button>
+                            <button class="btn-sm">30d</button>
+                        </div>
+                    </div>
+                    <canvas id="alertTimelineChart" height="200"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Alerts by Category</h3>
+                    </div>
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Alerts Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚨 Recent Critical Alerts</h3>
+                    <button class="btn-primary" onclick="switchTab('alerts')">View All</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="recentAlertsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Severity</th>
+                                <th>Rule ID</th>
+                                <th>Description</th>
+                                <th>Source</th>
+                                <th>MITRE</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentAlertsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Active Investigations -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 Active Investigations</h3>
+                </div>
+                <div class="investigation-cards">
+                    <div class="inv-card critical-border">
+                        <div class="inv-header">
+                            <span class="inv-id">IR-2024-001</span>
+                            <span class="severity-badge critical">CRITICAL</span>
+                        </div>
+                        <h4>Insider Data Exfiltration via USB</h4>
+                        <p>Employee jsmith accessed sensitive financial data and connected USB storage device during non-business hours.</p>
+                        <div class="inv-meta">
+                            <span>🕐 Started: 2024-01-15 22:34</span>
+                            <span>👤 Analyst: SOC-01</span>
+                            <span>📊 Phase: Containment</span>
+                        </div>
+                        <div class="inv-progress">
+                            <div class="progress-bar" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Alerts -->
+        <div class="tab-content" id="tab-alerts">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Alert Feed</h3>
+                    <div class="filter-group">
+                        <select id="severityFilter">
+                            <option value="all">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="categoryFilter">
+                            <option value="all">All Categories</option>
+                            <option value="insider_threat">Insider Threat</option>
+                            <option value="usb">USB Activity</option>
+                            <option value="powershell">PowerShell</option>
+                            <option value="authentication">Authentication</option>
+                            <option value="fim">File Integrity</option>
+                            <option value="log_tampering">Log Tampering</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="allAlertsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Severity</th>
+                                <th>Rule ID</th>
+                                <th>Description</th>
+                                <th>Agent</th>
+                                <th>User</th>
+                                <th>MITRE ID</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allAlertsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: MITRE ATT&CK -->
+        <div class="tab-content" id="tab-mitre">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🗺️ MITRE ATT&CK Coverage Heat Map</h3>
+                </div>
+                <div class="mitre-grid" id="mitreGrid"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Technique Details</h3>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Technique ID</th><th>Name</th><th>Tactic</th><th>Detections</th><th>Coverage</th></tr>
+                        </thead>
+                        <tbody id="mitreTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Attack Timeline -->
+        <div class="tab-content" id="tab-timeline">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⏱️ Insider Threat Attack Timeline</h3>
+                </div>
+                <div class="timeline" id="attackTimeline"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Endpoints -->
+        <div class="tab-content" id="tab-endpoints">
+            <div class="endpoint-grid" id="endpointGrid"></div>
+        </div>
+
+        <!-- Tab: IR Workflow -->
+        <div class="tab-content" id="tab-incident">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 Incident Response Workflow - NIST SP 800-61</h3>
+                </div>
+                <div class="ir-workflow" id="irWorkflow"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Forensics -->
+        <div class="tab-content" id="tab-forensics">
+            <div class="forensics-grid">
+                <div class="card">
+                    <div class="card-header"><h3>🔬 Evidence Chain of Custody</h3></div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Item</th><th>Type</th><th>SHA256</th><th>Collected</th><th>Custodian</th></tr></thead>
+                            <tbody id="evidenceBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>📊 IOC Summary</h3></div>
+                    <div class="ioc-cards" id="iocCards"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
